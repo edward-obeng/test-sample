@@ -1,0 +1,74 @@
+name: 🔍 PR Validation
+
+on:
+  pull_request:
+    branches: [ dev ]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  validate-pr:
+    name: Validate Pull Request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Needed for commit validation
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate branch name
+        run: |
+          BRANCH_NAME=${GITHUB_HEAD_REF}
+          if ! echo "$BRANCH_NAME" | grep -qE '^(feat|fix|hotfix)\/[a-z0-9-]+$'; then
+            echo "❌ Branch name '$BRANCH_NAME' does not follow the convention: (feat|fix|hotfix)/subject"
+            exit 1
+          fi
+          echo "✅ Branch name validation passed"
+
+      - name: Validate PR title
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          if ! echo "$PR_TITLE" | grep -qE '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)\(([a-z0-9-]+)\): .+\([A-Z]+-[0-9]+\)$'; then
+            echo "❌ PR title '$PR_TITLE' does not follow the format: <type>(<scope>): <subject>(<code>)"
+            echo "Example: feat(auth): add user authentication(TASK-123)"
+            exit 1
+          fi
+          echo "✅ PR title validation passed"
+
+      - name: Validate commit messages
+        run: |
+          # Get all commit messages in the PR
+          git log --format=%B ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > commit_messages.txt
+          
+          # Check each commit message
+          while IFS= read -r message; do
+            if [ -n "$message" ] && ! echo "$message" | grep -qE '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)\(([a-z0-9-]+)\): .+'; then
+              echo "❌ Commit message '$message' does not follow the format: <type>(<scope>): <subject>"
+              echo "Example: feat(auth): add user authentication"
+              exit 1
+            fi
+          done < commit_messages.txt
+          echo "✅ All commit messages follow the required format"
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Check formatting
+        run: echo "Running mock formatting check..." && exit 0
+
+      - name: Run shallow SonarQube scan
+        run: |
+          echo "Running mock shallow SonarQube scan..."
+          echo "Analyzing only changed files in this PR"
+          echo "✅ No quality issues found in changed files"

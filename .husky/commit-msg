@@ -4,8 +4,8 @@
 # Get the commit message
 COMMIT_MSG=$(cat "$1")
 
-# Check if the commit message follows the conventional format
-if ! echo "$COMMIT_MSG" | grep -qE '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.+\))?: .+'; then
+# Check if the commit message follows the format: <type>(<scope>): <subject>
+if ! echo "$COMMIT_MSG" | grep -qE '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)\(([a-z0-9-]+)\): .+'; then
   echo ""
   echo "\033[31m╔════════════════════════════════════════════════════════════╗\033[0m"
   echo "\033[31m║               INVALID COMMIT MESSAGE FORMAT               ║\033[0m"
@@ -13,8 +13,8 @@ if ! echo "$COMMIT_MSG" | grep -qE '^(build|chore|ci|docs|feat|fix|perf|refactor
   echo ""
   echo "\033[31mYour commit message: \"$COMMIT_MSG\"\033[0m"
   echo ""
-  echo "\033[33mPlease use this format: <type>: <description>\033[0m"
-  echo "\033[33mExample: feat: add new login feature\033[0m"
+  echo "\033[33mPlease use this format: <type>(<scope>): <subject>\033[0m"
+  echo "\033[33mExample: feat(auth): add password strength meter\033[0m"
   echo ""
   echo "\033[33mAllowed types:\033[0m"
   echo "  \033[36m- build\033[0m    (changes affecting build system or dependencies)"
