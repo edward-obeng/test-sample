@@ -1,0 +1,37 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Get the commit message
+COMMIT_MSG=$(cat "$1")
+
+# Check if the commit message follows the conventional format
+if ! echo "$COMMIT_MSG" | grep -qE '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.+\))?: .+'; then
+  echo ""
+  echo "\033[31m╔════════════════════════════════════════════════════════════╗\033[0m"
+  echo "\033[31m║               INVALID COMMIT MESSAGE FORMAT               ║\033[0m"
+  echo "\033[31m╚════════════════════════════════════════════════════════════╝\033[0m"
+  echo ""
+  echo "\033[31mYour commit message: \"$COMMIT_MSG\"\033[0m"
+  echo ""
+  echo "\033[33mPlease use this format: <type>: <description>\033[0m"
+  echo "\033[33mExample: feat: add new login feature\033[0m"
+  echo ""
+  echo "\033[33mAllowed types:\033[0m"
+  echo "  \033[36m- build\033[0m    (changes affecting build system or dependencies)"
+  echo "  \033[36m- chore\033[0m    (maintenance tasks, no production code change)"
+  echo "  \033[36m- ci\033[0m       (changes to CI configuration files/scripts)"
+  echo "  \033[36m- docs\033[0m     (documentation only changes)"
+  echo "  \033[36m- feat\033[0m     (new feature)"
+  echo "  \033[36m- fix\033[0m      (bug fix)"
+  echo "  \033[36m- perf\033[0m     (performance improvement)"
+  echo "  \033[36m- refactor\033[0m (code change that neither fixes a bug nor adds a feature)"
+  echo "  \033[36m- revert\033[0m   (revert to a previous commit)"
+  echo "  \033[36m- style\033[0m    (formatting, missing semi colons, etc; no code change)"
+  echo "  \033[36m- test\033[0m     (adding missing tests, refactoring tests)"
+  echo ""
+  echo "\033[36mSee more at: https://www.conventionalcommits.org\033[0m"
+  exit 1
+fi
+
+# If we get here, the format is valid
+exit 0

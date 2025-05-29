@@ -1,0 +1,17 @@
+{
+  "name": "test-sample",
+  "version": "1.0.0",
+  "description": "My test repo sample",
+  "main": "index.js",
+  "scripts": {
+    "prepare": "husky",
+    "lint": "echo 'Running mock linting...' && exit 0",
+    "test": "echo 'Running mock tests...' && exit 0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}
