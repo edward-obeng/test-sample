@@ -5,7 +5,6 @@ BRANCH_NAME=$(git symbolic-ref --short HEAD)
 
 # Skip validation for main and dev branches
 if [ "$BRANCH_NAME" = "main" ] || [ "$BRANCH_NAME" = "dev" ]; then
-  echo "u2705 Branch '$BRANCH_NAME' is exempt from naming convention checks"
   exit 0
 fi
 
@@ -13,9 +12,8 @@ fi
 if ! echo "$BRANCH_NAME" | grep -qE '^(feat|fix|hotfix)\/[a-z0-9-]+$'; then
   echo "Branch name '$BRANCH_NAME' does not follow the convention: (feat|fix|hotfix)/subject"
   echo "Allowed types:"
-  echo "  - feat/New feature"
+  echo "  - feat/New-feature"
   echo "  - fix/Bug-fix"
-  echo "  - hotfix/Critical bug fix"
+  echo "  - hotfix/Critical-bug-fix"
   exit 1
 fi
-echo "u2705 Branch name validation passed"
