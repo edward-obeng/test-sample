@@ -4,7 +4,7 @@ A lightweight, customizable setup for enforcing code quality and commit message 
 
 ## 🚀 Features
 
-- ✅ **Pre-commit Validation**: Runs linting and tests before each commit
+- ✅ **Pre-commit Validation**: Runs linting and tests before each commit.
 - ✅ **Commit Message Enforcement**: Ensures all commit messages follow the [Conventional Commits](https://www.conventionalcommits.org/) format
 - ✅ **Beautiful Error Messages**: User-friendly, detailed error messages when validation fails
 
