@@ -28,6 +28,16 @@ jobs:
       # - name: Install dependencies
       #   run: echo "Running mock install process..." && exit 0
 
+      - name: Initialize validation state
+        id: init
+        run: |
+          echo "branch_checked=true" >> $GITHUB_OUTPUT
+          echo "branch_valid=true" >> $GITHUB_OUTPUT
+          echo "pr_checked=false" >> $GITHUB_OUTPUT
+          echo "pr_valid=false" >> $GITHUB_OUTPUT
+          echo "commits_checked=false" >> $GITHUB_OUTPUT
+          echo "commits_valid=false" >> $GITHUB_OUTPUT
+
       - name: Validate branch name
         id: validate_branch
         run: |
@@ -39,24 +49,27 @@ jobs:
             exit 1
           fi
           echo "Branch name validation passed"
-          echo "branch_valid=true" >> $GITHUB_OUTPUT
 
       - name: Validate PR title
         id: validate_pr_title
+        if: success()
         run: |
+          echo "pr_checked=true" >> $GITHUB_OUTPUT
           PR_TITLE="${{ github.event.pull_request.title }}"
           if ! echo "$PR_TITLE" | grep -qE '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)\(([a-z0-9-]+)\): .+\([A-Z]+-[0-9]+\)$'; then
             echo "PR title '$PR_TITLE' does not follow the format: <type>(<scope>): <subject>(<code>)"
             echo "::error::PR title '$PR_TITLE' does not follow the format: <type>(<scope>): <subject>(<code>). Example: feat(auth): add user authentication(TASK-123)"
-            echo "pr_title_valid=false" >> $GITHUB_OUTPUT
+            echo "pr_valid=false" >> $GITHUB_OUTPUT
             exit 1
           fi
           echo "PR title validation passed"
-          echo "pr_title_valid=true" >> $GITHUB_OUTPUT
+          echo "pr_valid=true" >> $GITHUB_OUTPUT
 
       - name: Validate commit messages
         id: validate_commits
+        if: success()
         run: |
+          echo "commits_checked=true" >> $GITHUB_OUTPUT
           # Get all commit messages in the PR
           git log --format=%B ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > commit_messages.txt
 
@@ -86,37 +99,46 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const branchValid = '${{ steps.validate_branch.outputs.branch_valid }}' === 'true';
-            const prTitleValid = '${{ steps.validate_pr_title.outputs.pr_title_valid }}' === 'true';
+            const branchChecked = '${{ steps.init.outputs.branch_checked }}' === 'true';
+            const branchValid = '${{ steps.validate_branch.outcome }}' === 'success';
+            const prChecked = '${{ steps.validate_pr_title.outputs.pr_checked }}' === 'true';
+            const prValid = '${{ steps.validate_pr_title.outputs.pr_valid }}' === 'true';
+            const commitsChecked = '${{ steps.validate_commits.outputs.commits_checked }}' === 'true';
             const commitsValid = '${{ steps.validate_commits.outputs.commits_valid }}' === 'true';
-            const invalidCommits = `${{ steps.validate_commits.outputs.invalid_commits }}`;
+            const invalidCommits = `${{ steps.validate_commits.outputs.invalid_commits || '' }}`;
 
             let commentBody = '## PR Validation Results\n\n';
 
             // Branch name validation
-            if (branchValid) {
-              commentBody += '**Branch Name**: Passed\n\n';
-            } else {
-              commentBody += ' **Branch Name**: Failed\n';
-              commentBody += `Branch name '${context.payload.pull_request.head.ref}' does not follow the convention: (feat|fix|hotfix)/subject\n\n`;
+            if (branchChecked) {
+              if (branchValid) {
+                commentBody += '**Branch Name**: Passed\n\n';
+              } else {
+                commentBody += '**Branch Name**: Failed\n';
+                commentBody += `Branch name '${context.payload.pull_request.head.ref}' does not follow the convention: (feat|fix|hotfix)/subject\n\n`;
+              }
             }
 
-            // PR title validation
-            if (prTitleValid) {
-              commentBody += '**PR Title**: Passed\n\n';
-            } else {
-              commentBody += '**PR Title**: Failed\n';
-              commentBody += `PR title '${context.payload.pull_request.title}' does not follow the format: <type>(<scope>): <subject>(<code>)\n`;
-              commentBody += `Example: feat(auth): add user authentication(TASK-123)\n\n`;
+            // PR title validation - only show if it was checked
+            if (prChecked) {
+              if (prValid) {
+                commentBody += ' **PR Title**: Passed\n\n';
+              } else {
+                commentBody += ' **PR Title**: Failed\n';
+                commentBody += `PR title '${context.payload.pull_request.title}' does not follow the format: <type>(<scope>): <subject>(<code>)\n`;
+                commentBody += `Example: feat(auth): add user authentication(TASK-123)\n\n`;
+              }
             }
 
-            // Commit messages validation
-            if (commitsValid) {
-              commentBody += ' **Commit Messages**: All commit messages follow the required format\n\n';
-            } else {
-              commentBody += ' **Commit Messages**: Some commit messages are invalid\n';
-              commentBody += 'The following commits do not follow the format <type>(<scope>): <subject>:\n';
-              commentBody += invalidCommits + '\n\n';
+            // Commit messages validation - only show if they were checked
+            if (commitsChecked) {
+              if (commitsValid) {
+                commentBody += '**Commit Messages**: All commit messages follow the required format\n\n';
+              } else if (invalidCommits && invalidCommits.trim()) {
+                commentBody += ' **Commit Messages**: Some commit messages are invalid\n';
+                commentBody += 'The following commits do not follow the format <type>(<scope>): <subject>:\n';
+                commentBody += invalidCommits + '\n\n';
+              }
             }
 
             // Add link to guidelines
@@ -131,12 +153,15 @@ jobs:
             });
 
       - name: Run linting
+        if: success()
         run: echo "Running mock linting..."
 
       - name: Run tests
+        if: success()
         run: echo "Running mock tests..."
 
       - name: Run SonarQube scan
+        if: success()
         run: |
           echo "Running mock SonarQube scan..."
           echo "Analyzing only changed files in this PR"
