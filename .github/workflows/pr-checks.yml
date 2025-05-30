@@ -125,7 +125,7 @@ jobs:
                 commentBody += ' **PR Title**: Passed\n\n';
               } else {
                 commentBody += ' **PR Title**: Failed\n';
-                commentBody += `PR title '${context.payload.pull_request.title}' does not follow the format: <type>(<scope>): <subject>(<code>)\n`;
+                commentBody += `PR title '${context.payload.pull_request.title}' does not follow the format: type(scope): subject(code)\n`;
                 commentBody += `Example: feat(auth): add user authentication(TASK-123)\n\n`;
               }
             }
@@ -136,7 +136,8 @@ jobs:
                 commentBody += '**Commit Messages**: All commit messages follow the required format\n\n';
               } else if (invalidCommits && invalidCommits.trim()) {
                 commentBody += ' **Commit Messages**: Some commit messages are invalid\n';
-                commentBody += 'The following commits do not follow the format <type>(<scope>): <subject>:\n';
+                commentBody += 'The following commits do not follow the format type(scope): subject(code):\n';
+                commentBody += `Example: fix(api): resolve timeout issue \n\n`;
                 commentBody += invalidCommits + '\n\n';
               }
             }
