@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Validate branch name
+BRANCH_NAME=$(git symbolic-ref --short HEAD)
+if ! echo "$BRANCH_NAME" | grep -qE '^(feat|fix|hotfix)\/[a-z0-9-]+$'; then
+  echo "Branch name '$BRANCH_NAME' does not follow the convention: (feat|fix|hotfix)/subject"
+  echo "Allowed types:"
+  echo "  - feat: New feature"
+  echo "  - fix: Bug fix"
+  echo "  - hotfix: Critical bug fix"
+  exit 1
+fi
+echo "Branch name validation passed"
