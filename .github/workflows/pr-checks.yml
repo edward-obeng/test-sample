@@ -5,6 +5,10 @@ on:
     branches: [dev]
     types: [opened, synchronize, reopened, edited]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   validate-pr:
     name: Validate Pull Request
