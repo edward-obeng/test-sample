@@ -5,7 +5,7 @@
 COMMIT_MSG=$(cat "$1")
 
 # Check if the commit message follows the format: <type>(<scope>): <subject>
-if ! echo "$COMMIT_MSG" | grep -qE '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)\(([a-z0-9-]+)\): .+'; then
+if ! echo "$COMMIT_MSG" | grep -qE '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)\(([a-z0-9-]+)\):.+'; then
   echo ""
   echo "\033[31m╔════════════════════════════════════════════════════════════╗\033[0m"
   echo "\033[31m║               INVALID COMMIT MESSAGE FORMAT               ║\033[0m"
