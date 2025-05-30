@@ -25,38 +25,106 @@ jobs:
       #   run: echo "Running mock install process..." && exit 0
 
       - name: Validate branch name
+        id: validate_branch
         run: |
           BRANCH_NAME=${GITHUB_HEAD_REF}
           if ! echo "$BRANCH_NAME" | grep -qE '^(feat|fix|hotfix)\/[a-z0-9-]+$'; then
             echo "Branch name '$BRANCH_NAME' does not follow the convention: (feat|fix|hotfix)/subject"
+            echo "::error::Branch name '$BRANCH_NAME' does not follow the convention: (feat|fix|hotfix)/subject"
+            echo "branch_valid=false" >> $GITHUB_OUTPUT
             exit 1
           fi
           echo "Branch name validation passed"
+          echo "branch_valid=true" >> $GITHUB_OUTPUT
 
       - name: Validate PR title
+        id: validate_pr_title
         run: |
           PR_TITLE="${{ github.event.pull_request.title }}"
           if ! echo "$PR_TITLE" | grep -qE '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)\(([a-z0-9-]+)\): .+\([A-Z]+-[0-9]+\)$'; then
             echo "PR title '$PR_TITLE' does not follow the format: <type>(<scope>): <subject>(<code>)"
-            echo "Example: feat(auth): add user authentication(TASK-123)"
+            echo "::error::PR title '$PR_TITLE' does not follow the format: <type>(<scope>): <subject>(<code>). Example: feat(auth): add user authentication(TASK-123)"
+            echo "pr_title_valid=false" >> $GITHUB_OUTPUT
             exit 1
           fi
           echo "PR title validation passed"
+          echo "pr_title_valid=true" >> $GITHUB_OUTPUT
 
       - name: Validate commit messages
+        id: validate_commits
         run: |
           # Get all commit messages in the PR
           git log --format=%B ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > commit_messages.txt
 
           # Check each commit message
+          INVALID_COMMITS=""
           while IFS= read -r message; do
             if [ -n "$message" ] && ! echo "$message" | grep -qE '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)\(([a-z0-9-]+)\): .+'; then
               echo "Commit message '$message' does not follow the format: <type>(<scope>): <subject>"
-              echo "Example: feat(auth): add user authentication"
-              exit 1
+              INVALID_COMMITS="$INVALID_COMMITS\n- '$message'"
             fi
           done < commit_messages.txt
+
+          if [ -n "$INVALID_COMMITS" ]; then
+            echo "::error::Found invalid commit messages. All commits must follow the format: <type>(<scope>): <subject>"
+            echo "commits_valid=false" >> $GITHUB_OUTPUT
+            echo "invalid_commits<<EOF" >> $GITHUB_OUTPUT
+            echo "$INVALID_COMMITS" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
           echo "All commit messages follow the required format"
+          echo "commits_valid=true" >> $GITHUB_OUTPUT
+
+      - name: Post validation summary comment
+        if: always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const branchValid = '${{ steps.validate_branch.outputs.branch_valid }}' === 'true';
+            const prTitleValid = '${{ steps.validate_pr_title.outputs.pr_title_valid }}' === 'true';
+            const commitsValid = '${{ steps.validate_commits.outputs.commits_valid }}' === 'true';
+            const invalidCommits = `${{ steps.validate_commits.outputs.invalid_commits }}`;
+
+            let commentBody = '## PR Validation Results\n\n';
+
+            // Branch name validation
+            if (branchValid) {
+              commentBody += '✅ **Branch Name**: Passed\n\n';
+            } else {
+              commentBody += '❌ **Branch Name**: Failed\n';
+              commentBody += `Branch name '${context.payload.pull_request.head.ref}' does not follow the convention: (feat|fix|hotfix)/subject\n\n`;
+            }
+
+            // PR title validation
+            if (prTitleValid) {
+              commentBody += '✅ **PR Title**: Passed\n\n';
+            } else {
+              commentBody += '❌ **PR Title**: Failed\n';
+              commentBody += `PR title '${context.payload.pull_request.title}' does not follow the format: <type>(<scope>): <subject>(<code>)\n`;
+              commentBody += `Example: feat(auth): add user authentication(TASK-123)\n\n`;
+            }
+
+            // Commit messages validation
+            if (commitsValid) {
+              commentBody += '✅ **Commit Messages**: All commit messages follow the required format\n\n';
+            } else {
+              commentBody += '❌ **Commit Messages**: Some commit messages are invalid\n';
+              commentBody += 'The following commits do not follow the format <type>(<scope>): <subject>:\n';
+              commentBody += invalidCommits + '\n\n';
+            }
+
+            // Add link to guidelines
+            commentBody += '📝 See [COMMIT_GUIDELINES.md](https://github.com/edward-obeng/test-sample/blob/main/COMMIT_GUIDELINES.md) for more details.\n';
+
+            // Post the comment
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody
+            });
 
       - name: Run linting
         run: echo "Running mock linting..."
