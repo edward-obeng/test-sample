@@ -1,6 +1,7 @@
 # Git Hooks Enforcer
 
 A lightweight, customizable setup for enforcing code quality and commit message standards in your Git workflow.
+It works with GitHub Actions to validate pull requests and enforce commit message standards.
 
 ## 🚀 Features
 
