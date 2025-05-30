@@ -91,32 +91,32 @@ jobs:
 
             // Branch name validation
             if (branchValid) {
-              commentBody += '✅ **Branch Name**: Passed\n\n';
+              commentBody += '**Branch Name**: Passed\n\n';
             } else {
-              commentBody += '❌ **Branch Name**: Failed\n';
+              commentBody += ' **Branch Name**: Failed\n';
               commentBody += `Branch name '${context.payload.pull_request.head.ref}' does not follow the convention: (feat|fix|hotfix)/subject\n\n`;
             }
 
             // PR title validation
             if (prTitleValid) {
-              commentBody += '✅ **PR Title**: Passed\n\n';
+              commentBody += '**PR Title**: Passed\n\n';
             } else {
-              commentBody += '❌ **PR Title**: Failed\n';
+              commentBody += '**PR Title**: Failed\n';
               commentBody += `PR title '${context.payload.pull_request.title}' does not follow the format: <type>(<scope>): <subject>(<code>)\n`;
               commentBody += `Example: feat(auth): add user authentication(TASK-123)\n\n`;
             }
 
             // Commit messages validation
             if (commitsValid) {
-              commentBody += '✅ **Commit Messages**: All commit messages follow the required format\n\n';
+              commentBody += ' **Commit Messages**: All commit messages follow the required format\n\n';
             } else {
-              commentBody += '❌ **Commit Messages**: Some commit messages are invalid\n';
+              commentBody += ' **Commit Messages**: Some commit messages are invalid\n';
               commentBody += 'The following commits do not follow the format <type>(<scope>): <subject>:\n';
               commentBody += invalidCommits + '\n\n';
             }
 
             // Add link to guidelines
-            commentBody += '📝 See [COMMIT_GUIDELINES.md](https://github.com/edward-obeng/test-sample/blob/main/COMMIT_GUIDELINES.md) for more details.\n';
+            commentBody += ' See [COMMIT_GUIDELINES.md](https://github.com/edward-obeng/test-sample/blob/main/COMMIT_GUIDELINES.md) for more details.\n';
 
             // Post the comment
             github.rest.issues.createComment({
