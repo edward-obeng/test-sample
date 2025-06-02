@@ -17,3 +17,5 @@ if ! echo "$BRANCH_NAME" | grep -qE '^(feat|fix|hotfix)\/[a-z0-9-]+$'; then
   echo "  - hotfix/Critical-bug-fix"
   exit 1
 fi
+
+exit 0

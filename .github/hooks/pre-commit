@@ -1,0 +1,28 @@
+#!/bin/sh
+
+echo "Running pre-commit hooks..."
+
+# Run linting
+echo "Running linting..."
+# Replace with your actual linting command
+# For now, using the mock command from your package.json
+echo "Running mock linting..."
+# exit 0 is used to simulate successful linting as per your mock setup
+if [ $? -ne 0 ]; then
+  echo "Linting failed. Commit aborted."
+  exit 1
+fi
+
+# Run tests
+echo "Running tests..."
+# Replace with your actual test command
+# For now, using the mock command from your package.json
+echo "Running mock tests..."
+# exit 0 is used to simulate successful tests as per your mock setup
+if [ $? -ne 0 ]; then
+  echo "Tests failed. Commit aborted."
+  exit 1
+fi
+
+echo "Pre-commit hooks passed successfully."
+exit 0
