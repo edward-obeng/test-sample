@@ -22,7 +22,9 @@ After cloning the repository, run the setup script to configure Git hooks:
 ```bash
 # Make the setup script executable
 chmod +x setup-hooks.sh
+```
 
+```bash
 # Run the setup script
 ./setup-hooks.sh
 ```
