@@ -1,7 +1,7 @@
-# Git Hooks Enforcer
+# WORKFLOW GUIDELINES
 
-A lightweight, customizable setup for enforcing code quality and commit message standards in your Git workflow.
-It works with GitHub Actions to validate pull requests and enforce commit message standards.
+A lightweight and customizable Git workflow setup designed to enforce code quality standards and commit message conventions.
+It integrates seamlessly with GitHub Actions to automatically validate pull requests, ensuring consistent and clean code before merging.
 
 ## Features
 
@@ -11,32 +11,20 @@ It works with GitHub Actions to validate pull requests and enforce commit messag
 - **PR Title Validation**: Ensures PR titles include ticket references and follow conventions
 - **Beautiful Error Messages**: User-friendly, detailed error messages when validation fails
 
-## Set Up
+## Git Hooks Setup
 
-### Requirements
+This project uses Git hooks to enforce code quality standards and commit message conventions.
 
-- Node.js (v14 or higher)
-- npm (v6 or higher)
-- Git
+### First-time setup
 
-### Installation
+After cloning the repository, run the setup script to configure Git hooks:
 
-1. **Clone this repository or copy its files to your project**
+```bash
+# Make the setup script executable
+chmod +x setup-hooks.sh
 
-2. **Install dependencies**
-
-   ```bash
-   npm install
-   ```
-
-3. **Initialize Husky**
-
-   ```bash
-   npm run prepare
-   ```
-
-4. **Setup Successful**
-
+# Run the setup script
+./setup-hooks.sh
 ## Validation Rules
 
 ### Branch Names
@@ -135,3 +123,4 @@ After merge to dev branch
 
 - Runs full SonarQube analysis
 - Notifies team of successful build
+```
