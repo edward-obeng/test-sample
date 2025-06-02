@@ -25,6 +25,8 @@ chmod +x setup-hooks.sh
 
 # Run the setup script
 ./setup-hooks.sh
+```
+
 ## Validation Rules
 
 ### Branch Names
@@ -123,4 +125,7 @@ After merge to dev branch
 
 - Runs full SonarQube analysis
 - Notifies team of successful build
+
+```
+
 ```
