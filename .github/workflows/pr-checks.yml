@@ -24,10 +24,7 @@ jobs:
       #   run: echo "Running mock install process..." && exit 0
 
       - name: Validate commit messages
-        id: validate_commits
-        if: success()
         run: |
-          echo "commits_checked=true" >> $GITHUB_OUTPUT
           # Get all commit messages in the PR
           git log --format=%B ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > commit_messages.txt
 
@@ -52,15 +49,12 @@ jobs:
           echo "All commit messages follow the required format"
 
       - name: Run linting
-        if: success()
         run: echo "Running mock linting..."
 
       - name: Run tests
-        if: success()
         run: echo "Running mock tests..."
 
       - name: Run SonarQube scan
-        if: success()
         run: |
           echo "Running mock SonarQube scan..."
           echo "Analyzing only changed files in this PR"
