@@ -25,9 +25,8 @@ jobs:
 
       - name: Validate commit messages
         run: |
-          # Get all commit messages in the PR
-          git log --format=%B ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > commit_messages.txt
-
+          # Get last 10 commit messages
+          git log -n 10 --format=%B > commit_messages.txt
           # Check each commit message
           INVALID_COMMITS=""
           while IFS= read -r message; do
@@ -39,10 +38,6 @@ jobs:
 
           if [ -n "$INVALID_COMMITS" ]; then
             echo "::error::Found invalid commit messages. All commits must follow the format: <type>(<scope>): <subject>"
-            echo "commits_valid=false" >> $GITHUB_OUTPUT
-            echo "invalid_commits<<EOF" >> $GITHUB_OUTPUT
-            echo "$INVALID_COMMITS" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
             exit 1
           fi
 
