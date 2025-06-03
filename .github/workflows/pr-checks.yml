@@ -53,4 +53,4 @@ jobs:
         run: |
           echo "Running mock SonarQube scan..."
           echo "Analyzing only changed files in this PR"
-          echo "No quality issues found in changed files"
+          echo "No quality issues found in changed file"
