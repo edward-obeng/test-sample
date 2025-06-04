@@ -11,34 +11,35 @@ permissions:
 jobs:
   validate-pr:
     name: Validate Pull Request
+
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # Needed for commit validation
 
       - name: Validate branch name
         run: |
           BRANCH_NAME=${GITHUB_HEAD_REF}
-          if ! echo "$BRANCH_NAME" | grep -qE '^(feat|fix|hotfix|devops|setup)\/[a-z0-9-]+$'; then
-            echo "Branch name '$BRANCH_NAME' does not follow the convention: (feat|fix|hotfix|devops|setup)/subject"
-            echo "::error::Branch name '$BRANCH_NAME' does not follow the convention: (feat|fix|hotfix|devops|setup)/subject"
+          if ! echo "$BRANCH_NAME" | grep -qE '^(feat|fix|hotfix|devops)\/[a-z0-9-]+$'; then
+            echo "::error::Branch name '$BRANCH_NAME' does not follow the convention: (feat|fix|hotfix)/subject"
             exit 1
           fi
           echo "Branch name validation passed"
 
       - name: Validate PR title
+        if: success()
         run: |
           PR_TITLE="${{ github.event.pull_request.title }}"
           if ! echo "$PR_TITLE" | grep -qE '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)\(([a-z0-9-]+)\): .+\([A-Z]+-[0-9]+\)$'; then
-            echo "PR title '$PR_TITLE' does not follow the format: <type>(<scope>): <subject>(<code>)"
             echo "::error::PR title '$PR_TITLE' does not follow the format: <type>(<scope>): <subject>(<code>). Example: feat(auth): add user authentication(TASK-123)"
             exit 1
           fi
           echo "PR title validation passed"
 
       - name: Validate commit messages
+        if: success()
         run: |
           # Get all commit messages in the PR
           git log --format=%B ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > commit_messages.txt
@@ -46,6 +47,13 @@ jobs:
           # Check each commit message
           INVALID_COMMITS=""
           while IFS= read -r message; do
+            # Skip validation if message starts with "Merge"
+            if echo "$message" | grep -qE '^Merge'; then
+              echo "Skipping validation for merge commit: $message"
+              continue # Go to the next message
+            fi
+
+            # Proceed with validation for non-merge commits
             if [ -n "$message" ] && ! echo "$message" | grep -qE '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)\(([a-z0-9-]+)\): .+'; then
               echo "Commit message '$message' does not follow the format: <type>(<scope>): <subject>"
               INVALID_COMMITS="$INVALID_COMMITS\n- '$message'"
@@ -54,19 +62,21 @@ jobs:
 
           if [ -n "$INVALID_COMMITS" ]; then
             echo "::error::Found invalid commit messages. All commits must follow the format: <type>(<scope>): <subject>"
-            echo -e "$INVALID_COMMITS" # This line outputs the invalid commit messages to the log
+            echo -e "$INVALID_COMMITS"
             exit 1
           fi
-
           echo "All commit messages follow the required format"
 
       - name: Run linting
+        if: success()
         run: echo "Running mock linting..."
 
       - name: Run tests
+        if: success()
         run: echo "Running mock tests..."
 
       - name: Run SonarQube scan
+        if: success()
         run: |
           echo "Running mock SonarQube scan..."
           echo "Analyzing only changed files in this PR"
