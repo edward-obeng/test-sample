@@ -24,36 +24,64 @@ jobs:
 
       - name: Validate branch name
         run: |
-          BRANCH_NAME=${GITHUB_HEAD_REF}
+          # For pull_request_review events, GITHUB_HEAD_REF might not be populated.
+          # We use the pull_request object from the event context.
+          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
+          echo "Attempting to validate branch name: '$BRANCH_NAME'"
+
+          if [ -z "$BRANCH_NAME" ]; then
+            echo "::error::Could not determine branch name from github.event.pull_request.head.ref"
+            exit 1
+          fi
           if ! echo "$BRANCH_NAME" | grep -qE '^(feat|fix|hotfix)\/[a-z0-9-]+$'; then
             echo "::error::Branch name '$BRANCH_NAME' does not follow the convention: (feat|fix|hotfix)/subject"
             exit 1
           fi
-          echo "Branch name validation passed"
+          echo "Branch name validation passed. Branch: $BRANCH_NAME"
 
       - name: Validate PR title
         if: success()
         run: |
           PR_TITLE="${{ github.event.pull_request.title }}"
+          echo "Attempting to validate PR title: '$PR_TITLE'"
+
+          if [ -z "$PR_TITLE" ]; then
+            echo "::error::Could not determine PR title from github.event.pull_request.title"
+            exit 1
+          fi
           if ! echo "$PR_TITLE" | grep -qE '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)\(([a-z0-9-]+)\): .+\([A-Z]+-[0-9]+\)$'; then
             echo "::error::PR title '$PR_TITLE' does not follow the format: <type>(<scope>): <subject>(<code>). Example: feat(auth): add user authentication(TASK-123)"
             exit 1
           fi
-          echo "PR title validation passed"
+          echo "PR title validation passed. Title: $PR_TITLE"
 
       - name: Validate commit messages
         if: success()
         run: |
-          # Get all commit messages in the PR
-          git log --format=%B ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > commit_messages.txt
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          echo "Base SHA: $BASE_SHA, Head SHA: $HEAD_SHA"
+
+          if [ -z "$BASE_SHA" ] || [ -z "$HEAD_SHA" ]; then
+            echo "::error::Could not determine base or head SHA for commit validation."
+            exit 1
+          fi
+
+          echo "Validating commits between $BASE_SHA and $HEAD_SHA"
+          # The checkout action with fetch-depth: 0 should make all history available.
+          git log --format=%B ${BASE_SHA}..${HEAD_SHA} > commit_messages.txt
 
           # Check each commit message
           INVALID_COMMITS=""
-          while IFS= read -r message; do
-            if [ -n "$message" ] && ! echo "$message" | grep -qE '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)\(([a-z0-9-]+)\): .+'; then
-              INVALID_COMMITS="$INVALID_COMMITS\n- '$message'"
-            fi
-          done < commit_messages.txt
+          if [ ! -s commit_messages.txt ] && [ "$BASE_SHA" == "$HEAD_SHA" ]; then
+            echo "No new commits found between base and head, or PR is for the same commit. Skipping commit message validation."
+          else
+            while IFS= read -r message; do
+              if [ -n "$message" ] && ! echo "$message" | grep -qE '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)\(([a-z0-9-]+)\): .+'; then
+                INVALID_COMMITS="$INVALID_COMMITS\n- '$message'"
+              fi
+            done < commit_messages.txt
+          fi
 
           if [ -n "$INVALID_COMMITS" ]; then
             echo "::error::Found invalid commit messages. All commits must follow the format: <type>(<scope>): <subject>"
