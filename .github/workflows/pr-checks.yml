@@ -1,8 +1,12 @@
 name: PR Validation
 
 on:
-  push:
+  pull_request:
     branches: [dev]
+    types: [opened, synchronize, reopened, edited] # Excludes 'opened' as per your last change
+
+permissions:
+  contents: read
 
 jobs:
   validate-pr:
@@ -23,10 +27,31 @@ jobs:
       # - name: Install dependencies
       #   run: echo "Running mock install process..." && exit 0
 
+      - name: Validate branch name
+        run: |
+          BRANCH_NAME=${GITHUB_HEAD_REF}
+          if ! echo "$BRANCH_NAME" | grep -qE '^(feat|fix|hotfix|devops|setup)\/[a-z0-9-]+$'; then
+            echo "Branch name '$BRANCH_NAME' does not follow the convention: (feat|fix|hotfix|devops|setup)/subject"
+            echo "::error::Branch name '$BRANCH_NAME' does not follow the convention: (feat|fix|hotfix|devops|setup)/subject"
+            exit 1
+          fi
+          echo "Branch name validation passed"
+
+      - name: Validate PR title
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          if ! echo "$PR_TITLE" | grep -qE '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)\(([a-z0-9-]+)\): .+\([A-Z]+-[0-9]+\)$'; then
+            echo "PR title '$PR_TITLE' does not follow the format: <type>(<scope>): <subject>(<code>)"
+            echo "::error::PR title '$PR_TITLE' does not follow the format: <type>(<scope>): <subject>(<code>). Example: feat(auth): add user authentication(TASK-123)"
+            exit 1
+          fi
+          echo "PR title validation passed"
+
       - name: Validate commit messages
         run: |
-          # Get last 10 commit messages
-          git log -n 10 --format=%B > commit_messages.txt
+          # Get all commit messages in the PR
+          git log --format=%B ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > commit_messages.txt
+
           # Check each commit message
           INVALID_COMMITS=""
           while IFS= read -r message; do
@@ -38,6 +63,7 @@ jobs:
 
           if [ -n "$INVALID_COMMITS" ]; then
             echo "::error::Found invalid commit messages. All commits must follow the format: <type>(<scope>): <subject>"
+            echo -e "$INVALID_COMMITS" # This line outputs the invalid commit messages to the log
             exit 1
           fi
 
