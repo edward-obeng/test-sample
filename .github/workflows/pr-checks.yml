@@ -50,7 +50,15 @@ jobs:
           # Check each commit message
           INVALID_COMMITS=""
           while IFS= read -r message; do
+            # Skip validation if message starts with "Merge"
+            if echo "$message" | grep -qE '^Merge'; then
+              echo "Skipping validation for merge commit: $message"
+              continue # Go to the next message
+            fi
+
+            # Proceed with validation for non-merge commits
             if [ -n "$message" ] && ! echo "$message" | grep -qE '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)\(([a-z0-9-]+)\): .+'; then
+              echo "Commit message '$message' does not follow the format: <type>(<scope>): <subject>"
               INVALID_COMMITS="$INVALID_COMMITS\n- '$message'"
             fi
           done < commit_messages.txt

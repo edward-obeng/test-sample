@@ -3,6 +3,11 @@
 # Get the commit message
 COMMIT_MSG=$(cat "$1")
 
+# Check if the commit message starts with "Merge"
+if echo "$COMMIT_MSG" | grep -qE '^Merge'; then
+  exit 0
+fi
+
 # Check if the commit message follows the format: <type>(<scope>): <subject>
 if ! echo "$COMMIT_MSG" | grep -qE '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)\(([a-z0-9-]+)\):.+'; then
   echo ""
