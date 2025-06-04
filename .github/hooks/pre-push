@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# Validate branch name
+BRANCH_NAME=$(git symbolic-ref --short HEAD)
+
+# Skip validation for main and dev branches
+if [ "$BRANCH_NAME" = "main" ] || [ "$BRANCH_NAME" = "dev" ]; then
+  exit 0
+fi
+
+# Check branch naming convention for all other branches
+if ! echo "$BRANCH_NAME" | grep -qE '^(feat|fix|hotfix)\/[a-z0-9-]+$'; then
+  echo "Branch name '$BRANCH_NAME' does not follow the convention: (feat|fix|hotfix)/subject"
+  echo "Allowed types:"
+  echo "  - feat/New-feature"
+  echo "  - fix/Bug-fix"
+  echo "  - hotfix/Critical-bug-fix"
+  exit 1
+fi
+
+exit 0
