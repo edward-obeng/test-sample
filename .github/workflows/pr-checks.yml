@@ -5,16 +5,13 @@ on:
     branches: [dev]
     types: [opened, synchronize, reopened, edited]
 
-  pull_request_review:
-    types: [submitted]
-
 permissions:
   contents: read
 
 jobs:
   validate-pr:
     name: Validate Pull Request
-    if: github.event.review.state == 'approved'
+
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
