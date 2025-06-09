@@ -10,7 +10,7 @@ NC='\033[0m' # No Color
 # Regex patterns from your configuration
 BRANCH_PATTERN='^(feat|fix|hotfix)\/[a-z0-9-]+$'
 COMMIT_PATTERN='^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)\(([a-z0-9-]+)\): .+'
-PR_TITLE_PATTERN='^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)\(([a-z0-9-]+)\): .+\([A-Z]+-[0-9]+\)$'
+PR_TITLE_PATTERN='^(([a-z0-9-]+))\(([a-z0-9-]+)\)\(([a-z0-9-]+)\): .+\([A-Z]+-[0-9]+\)$'
 
 # Function to validate branch names
 validate_branch() {
