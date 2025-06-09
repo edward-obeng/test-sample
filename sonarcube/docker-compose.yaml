@@ -6,14 +6,29 @@ services:
       POSTGRES_USER: sonar
       POSTGRES_PASSWORD: sonar
       POSTGRES_DB: sonarqube
+    volumes:
+      - sonarqube_db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
   sonarqube:
     image: sonarqube
     container_name: sonarqube
-    ports:
-      - "9000:9000"
-    links:
-      - sonarqube-db:db
+    depends_on:
+      - sonarqube-db
     environment:
-      SONAR_JDBC_URL: jdbc:postgresql://db:5432/sonarqube
+      SONAR_JDBC_URL: jdbc:postgresql://sonarqube-db:5432/sonarqube
       SONAR_JDBC_USERNAME: sonar
       SONAR_JDBC_PASSWORD: sonar
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    ports:
+      - "9000:9000"
+    restart: unless-stopped
+
+volumes:
+  sonarqube_db_data:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:

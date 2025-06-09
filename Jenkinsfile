@@ -3,10 +3,6 @@ pipeline {
         any // Assumes a Jenkins agent with this label
     }
 
-    environment {
-        NODE_VERSION = '22" // Matches GitHub Actions Node.js version
-    }
-
     stages {
         stage('Checkout Code') {
             steps {
@@ -71,7 +67,7 @@ pipeline {
 
         stage('Set up Node.js') {
             steps {
-                nodejs(nodeJSInstallationName: 'Node 17') { // Assumes Node 17 is configured in Jenkins
+                nodejs(nodeJSInstallationName: 'Node 22') { // Assumes Node 17 is configured in Jenkins
                     sh 'node --version'
                     sh 'npm --version'
                 }
@@ -80,7 +76,7 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                nodejs(nodeJSInstallationName: 'Node 17') {
+                nodejs(nodeJSInstallationName: 'Node 22') {
                     sh 'npm ci'
                 }
             }
