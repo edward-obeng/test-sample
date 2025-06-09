@@ -1,7 +1,5 @@
 pipeline {
-    agent {
-        any // Assumes a Jenkins agent with this label
-    }
+    agent any 
 
     stages {
         stage('Checkout Code') {
