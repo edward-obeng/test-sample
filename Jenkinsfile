@@ -6,7 +6,7 @@ pipeline {
             steps {
                 checkout scm
                 // Fetch full history for commit message validation
-                sh 'git fetch --depth=0'
+                sh 'git fetch'
             }
         }
 
