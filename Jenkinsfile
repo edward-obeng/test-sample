@@ -7,15 +7,17 @@ pipeline {
                 checkout scm
                 // Fetch full history for commit message validation
                 sh 'git fetch --all'
-                
-                // Get the branch name
-                def branch = env.CHANGE_BRANCH
-                // Publish build started status
-                publishChecks name: 'Jenkins CI',
-                                  title: 'Build Started',
-                                  summary: "Pipeline started for branch ${branch}" + (env.CHANGE_ID ? " (PR #${env.CHANGE_ID})" : ''),
-                                  status: 'IN_PROGRESS',
-                                  detailsURL: env.BUILD_URL
+
+                script {
+                    // Get the branch name
+                    def branch = env.CHANGE_BRANCH
+                    // Publish build started status
+                    publishChecks name: 'Jenkins CI',
+                                    title: 'Build Started',
+                                    summary: "Pipeline started for branch ${branch}" + (env.CHANGE_ID ? " (PR #${env.CHANGE_ID})" : ''),
+                                    status: 'IN_PROGRESS',
+                                    detailsURL: env.BUILD_URL
+                }
             }
         }
 
