@@ -55,7 +55,7 @@ pipeline {
 
         stage('Lint and Test') {
             steps {
-                nodejs(nodeJSInstallationName: 'Node 22') {
+                nodejs(nodeJSInstallationName: 'node-22') {
                     // Install dependencies
                     sh 'npm ci'
                     // Run linting
