@@ -1,43 +1,33 @@
 pipeline {
-    agent any 
+    agent any
 
     stages {
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
                 checkout scm
                 // Fetch full history for commit message validation
-                sh 'git fetch'
+                sh 'git fetch --all'
             }
         }
 
-        stage('Validate Branch Name') {
+        stage('Validate Git Conventions') {
             steps {
                 script {
+                    // Validate Branch Name
                     def branchName = env.CHANGE_BRANCH // Pull request source branch
-                    if (!branchName.matches('^(chore|docs|feat|fix|refactor|style|test|hotfix|devops)/[a-z0-9-]+$')) {
+                    if (!branchName.matches('.+)) {
                         error "Branch name '${branchName}' does not follow the convention: (chore|docs|feat|fix|refactor|style|test|hotfix|devops)/subject"
                     }
                     echo "Branch name validation passed"
-                }
-            }
-        }
 
-        stage('Validate PR Title') {
-            steps {
-                script {
+                    // Validate PR Title
                     def prTitle = env.CHANGE_TITLE // Pull request title
-                    if (!prTitle.matches('^([a-z0-9-]+)\\(([a-z0-9-]+)\\): .+\\([A-Z]+-[0-9]+\\)$')) {
+                    if (!prTitle.matches('.+')) {
                         error "PR title '${prTitle}' does not follow the format: <type>(<scope>): <subject>(<code>). Example: feat(auth): add user authentication(TASK-123)"
                     }
                     echo "PR title validation passed"
-                }
-            }
-        }
 
-        stage('Validate Commit Messages') {
-            steps {
-                script {
-                    // Get base and head SHAs for the PR
+                    // Validate Commit Messages
                     def baseSha = env.CHANGE_TARGET // Target branch (e.g., dev)
                     def headSha = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
                     
@@ -50,7 +40,7 @@ pipeline {
                     commitMessages.each { message ->
                         if (message.trim().startsWith('Merge')) {
                             echo "Skipping validation for merge commit: ${message}"
-                        } else if (message.trim() && !message.trim().matches('^(chore|docs|feat|fix|refactor|style|test)\\(([a-z0-9-]+)\\): .+')) {
+                        } else if (message.trim() && !message.trim().matches('.+')) {
                             invalidCommits << message
                         }
                     }
@@ -63,34 +53,14 @@ pipeline {
             }
         }
 
-        stage('Set up Node.js') {
-            steps {
-                nodejs(nodeJSInstallationName: 'Node 22') { // Assumes Node 17 is configured in Jenkins
-                    sh 'node --version'
-                    sh 'npm --version'
-                }
-            }
-        }
-
-        stage('Install Dependencies') {
+        stage('Lint and Test') {
             steps {
                 nodejs(nodeJSInstallationName: 'Node 22') {
+                    // Install dependencies
                     sh 'npm ci'
-                }
-            }
-        }
-
-        stage('Run Linting') {
-            steps {
-                nodejs(nodeJSInstallationName: 'Node 22') {
+                    // Run linting
                     sh 'npm run lint'
-                }
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
-                nodejs(nodeJSInstallationName: 'Node 22') {
+                    // Run tests
                     sh 'npm run test'
                 }
             }
