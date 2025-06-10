@@ -8,10 +8,11 @@ pipeline {
                 // Fetch full history for commit message validation
                 sh 'git fetch --all'
                 // Publish build started status
-                githubNotify context: 'Jenkins CI',
-                             description: 'Build Started',
-                             status: 'PENDING',
-                             targetUrl: env.BUILD_URL
+                publishChecks name: 'Jenkins CI',
+                                  title: 'Build Started',
+                                  summary: "Pipeline started for branch ${branch}" + (env.CHANGE_ID ? " (PR #${env.CHANGE_ID})" : ''),
+                                  status: 'IN_PROGRESS',
+                                  detailsURL: env.BUILD_URL
             }
         }
 
@@ -33,7 +34,7 @@ pipeline {
                     echo "PR title validation passed"
 
                     // Validate Commit Messages
-                    def baseSha = env.CHANGE_TARGET ?: 'origin/main' // Fallback to main if not a PR
+                    def baseSha = env.CHANGE_TARGET ?: 'origin/main'
                     def headSha = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
                     
                     // Get commit messages between base and head
@@ -60,7 +61,7 @@ pipeline {
 
         stage('Lint and Test') {
             steps {
-                nodejs(nodeJSInstallationName: 'node-22') {
+                nodejs(nodeJSInstallationName: 'Node 22') {
                     // Install dependencies
                     sh 'npm ci'
                     // Run linting
@@ -74,16 +75,26 @@ pipeline {
 
     post {
         success {
-            githubNotify context: 'Jenkins CI',
-                         description: 'Build Succeeded',
-                         status: 'SUCCESS',
-                         targetUrl: env.BUILD_URL
+            script {
+                def branch = env.CHANGE_BRANCH ?: 'develop'
+                publishChecks name: 'Jenkins CI',
+                              title: 'Build Succeeded',
+                              summary: "Pipeline succeeded for branch ${branch}" + (env.CHANGE_ID ? " (PR #${env.CHANGE_ID})" : ''),
+                              status: 'COMPLETED',
+                              conclusion: 'SUCCESS',
+                              detailsURL: env.BUILD_URL
+            }
         }
         failure {
-            githubNotify context: 'Jenkins CI',
-                         description: 'Build Failed',
-                         status: 'FAILURE',
-                         targetUrl: env.BUILD_URL
+            script {
+                def branch = env.CHANGE_BRANCH ?: 'develop'
+                publishChecks name: 'Jenkins CI',
+                              title: 'Build Failed',
+                              summary: "Pipeline failed for branch ${branch}" + (env.CHANGE_ID ? " (PR #${env.CHANGE_ID})" : ''),
+                              status: 'COMPLETED',
+                              conclusion: 'FAILURE',
+                              detailsURL: env.BUILD_URL
+            }
         }
         always {
             cleanWs()
