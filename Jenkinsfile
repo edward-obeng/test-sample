@@ -3,10 +3,21 @@ pipeline {
 
     stages {
         stage('Checkout') {
+            
             steps {
                 checkout scm
+
                 // Fetch full history for commit message validation
                 sh 'git fetch --all'
+
+                // Publish build started check
+                publishChecks name: 'Jenkins CI',
+                                  title: 'Build Started',
+                                  summary: "Pipeline started for branch ${branch}" + (env.CHANGE_ID ? " (PR #${env.CHANGE_ID})" : ''),
+                                  status: 'IN_PROGRESS',
+                                  detailsURL: env.BUILD_URL
+                }
+
             }
         }
 
@@ -68,11 +79,28 @@ pipeline {
     }
 
     post {
-        always {
-            cleanWs() // Clean workspace after the build
+        success {
+            script {
+                publishChecks name: 'Jenkins CI',
+                              title: 'Build Succeeded',
+                              summary: "Pipeline succeeded for branch ${branch}" + (env.CHANGE_ID ? " (PR #${env.CHANGE_ID})" : ''),
+                              status: 'COMPLETED',
+                              conclusion: 'SUCCESS',
+                              detailsURL: env.BUILD_URL
+            }
         }
         failure {
-            echo 'One or more checks failed. Please review the logs.'
+            script {
+                publishChecks name: 'Jenkins CI',
+                              title: 'Build Failed',
+                              summary: "Pipeline failed for branch ${branch}" + (env.CHANGE_ID ? " (PR #${env.CHANGE_ID})" : ''),
+                              status: 'COMPLETED',
+                              conclusion: 'FAILURE',
+                              detailsURL: env.BUILD_URL
+            }
+        }
+        always {
+            cleanWs()
         }
     }
 }
