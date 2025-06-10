@@ -7,6 +7,9 @@ pipeline {
                 checkout scm
                 // Fetch full history for commit message validation
                 sh 'git fetch --all'
+                
+                // Get the branch name
+                def branch = env.CHANGE_BRANCH
                 // Publish build started status
                 publishChecks name: 'Jenkins CI',
                                   title: 'Build Started',
@@ -76,7 +79,7 @@ pipeline {
     post {
         success {
             script {
-                def branch = env.CHANGE_BRANCH ?: 'develop'
+                def branch = env.CHANGE_BRANCH
                 publishChecks name: 'Jenkins CI',
                               title: 'Build Succeeded',
                               summary: "Pipeline succeeded for branch ${branch}" + (env.CHANGE_ID ? " (PR #${env.CHANGE_ID})" : ''),
