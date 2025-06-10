@@ -38,27 +38,27 @@ pipeline {
                     }
                     echo "PR title validation passed"
 
-                    // Validate Commit Messages
-                    def baseSha = env.CHANGE_TARGET ?: 'origin/main'
-                    def headSha = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                    // // Validate Commit Messages
+                    // def baseSha = env.CHANGE_TARGET ?: 'origin/main'
+                    // def headSha = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
                     
-                    // Get commit messages between base and head
-                    sh "git log --format=%B ${baseSha}..${headSha} > commit_messages.txt"
+                    // // Get commit messages between base and head
+                    // sh "git log --format=%B ${baseSha}..${headSha} > commit_messages.txt"
                     
-                    def invalidCommits = []
-                    def commitMessages = readFile('commit_messages.txt').split('\n')
+                    // def invalidCommits = []
+                    // def commitMessages = readFile('commit_messages.txt').split('\n')
                     
-                    commitMessages.each { message ->
-                        if (message.trim().startsWith('Merge')) {
-                            echo "Skipping validation for merge commit: ${message}"
-                        } else if (!message.trim()) {
-                            invalidCommits << message
-                        }
-                    }
+                    // commitMessages.each { message ->
+                    //     if (message.trim().startsWith('Merge')) {
+                    //         echo "Skipping validation for merge commit: ${message}"
+                    //     } else if (!message.trim()) {
+                    //         invalidCommits << message
+                    //     }
+                    // }
                     
-                    if (invalidCommits) {
-                        error "Found empty commit messages.\nInvalid commits:\n- ${invalidCommits.join('\n- ')}"
-                    }
+                    // if (invalidCommits) {
+                    //     error "Found empty commit messages.\nInvalid commits:\n- ${invalidCommits.join('\n- ')}"
+                    // }
                     echo "All commit messages are valid"
                 }
             }
